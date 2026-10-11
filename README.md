@@ -11,13 +11,17 @@
 - отмена заявки (без удаления — сохраняется в истории со статусом «cancelled»);
 - фиксация результата прохождения курса (баллы);
 - просмотр своих заявок и результатов;
-- просмотр курсов и заявок в браузере (веб-интерфейс на Django).
+- просмотр курсов и заявок в браузере (веб-интерфейс на Django,
+  страницы формируются шаблонами).
 
 ## Используемые технологии
 - Python 3.14;
 - Django 5.2 — веб-фреймворк;
-- HTML — разметка веб-страниц;
-- CSS и Bootstrap 5.3 — оформление страниц;
+- Django Template Language (DTL) — шаблоны страниц;
+- HTML5 — разметка веб-страниц;
+- CSS3, собственный `style.css` и Bootstrap 5.3 — оформление страниц;
+- JavaScript — небольшое клиентское поведение (`main.js`);
+- JSON — хранение данных;
 - pytest — автоматизированные тесты;
 - flake8 — проверка качества кода.
 
@@ -73,16 +77,31 @@ course_registration/
 ├── requirements.txt
 ├── coursereg/               — конфигурация Django-проекта
 │   ├── settings.py
-│   ├── urls.py              — маршрутизация верхнего уровня
-│   ├── asgi.py
-│   └── wsgi.py
-├── homepage/                — приложение: главная страница и каркас page()
+│   └── urls.py              — маршрутизация верхнего уровня
+├── templates/               — шаблоны уровня проекта
+│   ├── base.html            — базовый шаблон
+│   └── includes/
+│       └── navigation.html  — навигация
+├── homepage/
+│   ├── templates/homepage/index.html
+│   ├── static/homepage/
+│   │   ├── css/style.css    — собственный CSS
+│   │   ├── js/main.js       — собственный JavaScript
+│   │   └── img/logo.png     — логотип
 │   ├── views.py
 │   └── urls.py
-├── courses/                 — приложение: страницы курсов
+├── courses/
+│   ├── templates/courses/
+│   │   ├── course_list.html
+│   │   ├── course_detail.html
+│   │   └── includes/course_card.html
 │   ├── views.py
 │   └── urls.py
-├── applications/            — приложение: страницы заявок
+├── applications/
+│   ├── templates/applications/
+│   │   ├── application_list.html
+│   │   ├── application_detail.html
+│   │   └── includes/application_status.html
 │   ├── views.py
 │   └── urls.py
 ├── models/                  — классы предметной области (ПР3)
@@ -96,40 +115,76 @@ course_registration/
 
 Файлы `models.py` Django-приложений пока пустые: пакет `models/` с
 классами предметной области (ПР3) продолжает использоваться как источник
-данных для веб-интерфейса. Django-модели появятся при подключении ORM.
+данных для веб-интерфейса. Django ORM и база данных не используются.
 
 ## Веб-интерфейс (Django)
 
-Django-проект называется `coursereg`, состоит из трёх приложений
-(`homepage`, `courses`, `applications`). Для сотрудников отдельного
-приложения нет — на следующих этапах будет использована встроенная
-модель `User`. Маршруты распределены по двум уровням: корневой
-`coursereg/urls.py` подключает `urls.py` каждого приложения через
-`include()`.
+Веб-часть реализована на Django. Основные страницы:
+- главная страница;
+- список курсов;
+- информация об отдельном курсе;
+- список заявок;
+- информация об отдельной заявке.
 
-| URL                         | View-функция                       | Страница                   |
-|-----------------------------|------------------------------------|----------------------------|
-| `/`                         | `homepage.views.index`             | главная, навигация         |
-| `/courses/`                 | `courses.views.courses`            | список курсов              |
-| `/courses/<int:course_id>/` | `courses.views.course_detail`      | карточка курса             |
-| `/applications/`            | `applications.views.applications`  | список заявок со статусами |
-| `/applications/<int:application_id>/` | `applications.views.application_detail` | карточка заявки, результат |
+Для формирования страниц используются Django-шаблоны. HTML в
+Python-коде веб-представлений не формируется, функция `page()` из ПР5
+удалена. Представления загружают данные средствами ПР3, подготавливают
+контекст и вызывают `render()`.
 
-Если курс или заявка с указанным идентификатором не найдены, страница
-возвращает код статуса 404.
+| URL                                   | Имя маршрута            | Шаблон                                    |
+|---------------------------------------|-------------------------|-------------------------------------------|
+| `/`                                   | `homepage:index`        | `homepage/index.html`                     |
+| `/courses/`                           | `courses:list`          | `courses/course_list.html`                |
+| `/courses/<int:course_id>/`           | `courses:detail`        | `courses/course_detail.html`              |
+| `/applications/`                      | `applications:list`     | `applications/application_list.html`      |
+| `/applications/<int:application_id>/` | `applications:detail`   | `applications/application_detail.html`    |
 
-Общий HTML-каркас (кодировка, заголовок вкладки, Bootstrap 5.3 через
-CDN, навигация) формируется функцией `page()` в `homepage/views.py`;
-остальные приложения импортируют её. Данные в строках выводятся через
-`escape()`.
+Если курс или заявка не найдены, шаблон выводит сообщение, а ответ
+имеет код статуса 404 (`status=404 if obj is None else 200`).
 
-Используется в веб-интерфейсе: `load_courses()`, `load_employees()`,
-`load_applications()`, `load_results()`, `find_course_by_id()`,
-`find_application_by_id()`, `find_result_for_application()`,
-`taken_seats()`, `Course.has_free_seats()`, `get_application_status()`.
-Функции, изменяющие данные (создание курса и заявки, одобрение,
-отклонение, отмена, фиксация результата), работают в консольной версии и
-появятся в веб-интерфейсе вместе с формами и POST-запросами.
+## Django Template Language
+
+### Базовый шаблон и наследование
+Общая структура страниц находится в `templates/base.html`: кодировка,
+`{% block title %}`, подключение Bootstrap и собственных статических
+файлов, логотип, навигация, `{% block content %}`, подвал. Дочерние
+шаблоны используют `{% extends "base.html" %}` и переопределяют блоки.
+Каталог `templates/` подключён в `TEMPLATES["DIRS"]`.
+
+### Включаемые шаблоны
+- `templates/includes/navigation.html` — навигация сайта;
+- `courses/includes/course_card.html` — карточка курса;
+- `applications/includes/application_status.html` — статус заявки
+  (используется в списке и на странице заявки).
+
+Подключение: `{% include "courses/includes/course_card.html" %}`.
+
+### Контекст
+Представления передают данные словарём `context`, например для списка
+курсов `{"items": items}`; в шаблоне `{% for item in items %}`.
+
+### Циклы и условия
+`{% for %}` с `{% empty %}` (сообщения «Курсы не найдены.»,
+«Заявки не найдены.»); `{% if %}` / `{% elif %}` / `{% else %}` для
+статуса заявки, наличия мест и отсутствующего объекта.
+
+### Именованные URL и пространства имён
+В `urls.py` каждого приложения задан `app_name` (`homepage`, `courses`,
+`applications`). Ссылки строятся тегом `{% url %}`:
+`{% url 'courses:detail' course.id %}`, `{% url 'applications:list' %}`.
+
+### Фильтры
+`{{ items|length }}` и `{{ applications|length }}` — количество
+элементов; `{{ course.title|default:"Без названия" }}` — значение по
+умолчанию. Дата начала курса хранится как строка и выводится без
+преобразования.
+
+### Статические файлы
+`homepage/static/homepage/`: `css/style.css`, `js/main.js`,
+`img/logo.png`. В шаблонах: `{% load static %}` и
+`{% static 'homepage/css/style.css' %}`. `main.js` выводит текущий год в
+подвале; собственные стили оформляют логотип, карточки курсов и статусы
+заявок. Проверка: `python manage.py findstatic homepage/img/logo.png`.
 
 ## Формат данных
 Данные хранятся в каталоге `data/` в формате JSON (списки объектов):
@@ -170,20 +225,31 @@ python main.py
 ```
 pytest -v
 ```
-Тесты консольной части (ПР3) и тесты веб-слоя (`tests/test_web.py`).
+Тесты консольной части (ПР3) и тесты веб-слоя (`tests/test_web.py`):
+коды ответов, используемые шаблоны, именованные URL, статические файлы,
+страницы 404, пустые коллекции.
+
+Проверка проекта Django:
+```
+python manage.py check
+```
 
 ## Проверка качества кода
 ```
-flake8 .
+flake8 . --extend-exclude=venv
 ```
 
-## План развития
-Реализовано (ПР5): Django-проект и три приложения, двухуровневая
-маршрутизация, view-функции, страницы курсов и заявок, навигация,
-оформление Bootstrap 5.3.
+## Текущее состояние и план развития
+Реализовано: консольная версия на объектной модели (ПР3); Django-проект,
+маршрутизация, view-функции (ПР5); шаблоны Django, базовый шаблон,
+включаемые шаблоны, фильтры, именованные URL, статические файлы,
+собственные CSS и JavaScript (ПР6).
+
+Пока не реализовано: данные хранятся в JSON, Django ORM не
+используется, формы Django отсутствуют; работа с базой данных относится
+к следующим практическим работам.
 
 На следующих этапах планируется:
-- шаблоны Django (`templates/`) вместо функции `page()`;
 - перенос сущностей в Django ORM, подключение базы данных;
 - формы создания курсов и заявок;
 - реализация пользователей и ролей (сотрудник/куратор);

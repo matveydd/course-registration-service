@@ -12,6 +12,7 @@ django.setup()
 import storage  # noqa: E402
 from django.test import Client  # noqa: E402
 from django.test.utils import setup_test_environment  # noqa: E402
+from django.urls import reverse  # noqa: E402
 
 setup_test_environment()
 
@@ -52,10 +53,11 @@ def test_pages_return_200(client, url):
     assert client.get(url).status_code == 200
 
 
-def test_course_list_shows_free_seats(client):
+def test_course_list_shows_free_seats_and_count(client):
     html = client.get("/courses/").content.decode()
     assert "Основы Python" in html
-    assert "свободно 0 из 1" in html
+    assert "Свободно мест: 0 из 1" in html
+    assert "Всего курсов: 1" in html
 
 
 def test_course_detail_shows_no_seats_badge(client):
@@ -81,3 +83,74 @@ def test_pages_include_bootstrap_and_navigation(client):
     assert "bootstrap@5.3.3" in html
     assert 'href="/courses/"' in html
     assert 'href="/applications/"' in html
+
+
+@pytest.mark.parametrize(
+    "url, template",
+    [
+        ("/", "homepage/index.html"),
+        ("/courses/", "courses/course_list.html"),
+        ("/courses/1/", "courses/course_detail.html"),
+        ("/applications/", "applications/application_list.html"),
+        ("/applications/1/", "applications/application_detail.html"),
+    ],
+)
+def test_pages_use_templates_with_base(client, url, template):
+    response = client.get(url)
+    names = [t.name for t in response.templates]
+    assert template in names
+    assert "base.html" in names
+    assert "includes/navigation.html" in names
+
+
+def test_includes_are_used(client):
+    names = [t.name for t in client.get("/courses/").templates]
+    assert "courses/includes/course_card.html" in names
+    names = [t.name for t in client.get("/applications/").templates]
+    assert "applications/includes/application_status.html" in names
+
+
+def test_named_urls_are_resolved(client):
+    assert reverse("homepage:index") == "/"
+    assert reverse("courses:list") == "/courses/"
+    assert reverse("courses:detail", args=[1]) == "/courses/1/"
+    assert reverse("applications:list") == "/applications/"
+    assert reverse("applications:detail", args=[1]) == "/applications/1/"
+
+
+def test_links_are_built_from_named_urls(client):
+    html = client.get("/courses/").content.decode()
+    assert 'href="/courses/1/"' in html
+
+
+def test_static_files_are_linked_in_base_template(client):
+    html = client.get("/").content.decode()
+    assert "/static/homepage/css/style.css" in html
+    assert "/static/homepage/img/logo.png" in html
+    assert "/static/homepage/js/main.js" in html
+
+
+def test_404_pages_show_messages(client):
+    html = client.get("/courses/999/").content.decode()
+    assert "Курс не найден" in html
+    html = client.get("/applications/999/").content.decode()
+    assert "Заявка не найдена" in html
+
+
+def test_empty_collections_show_empty_messages(tmp_path, monkeypatch):
+    monkeypatch.setattr(storage, "DATA_DIR", tmp_path)
+    client = Client()
+    assert "Курсы не найдены." in client.get("/courses/").content.decode()
+    html = client.get("/applications/").content.decode()
+    assert "Заявки не найдены." in html
+
+
+def test_application_status_variants(client):
+    html = client.get("/applications/").content.decode()
+    assert "application-status-approved" in html
+
+
+def test_page_helper_is_removed():
+    import homepage.views
+
+    assert not hasattr(homepage.views, "page")

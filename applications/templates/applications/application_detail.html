@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if application %}
+        Заявка №{{ application.id }} – Регистрация на курсы
+    {% else %}
+        Заявка не найдена – Регистрация на курсы
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if application %}
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">
+                    Заявка №{{ application.id }}
+                </h1>
+
+                <p class="card-text">
+                    <strong>Курс:</strong>
+                    <a href="{% url 'courses:detail' application.course.id %}">
+                        {{ application.course.title }}
+                    </a>
+                </p>
+
+                <p class="card-text">
+                    <strong>Сотрудник:</strong>
+                    {{ application.employee.full_name }}
+                    ({{ application.employee.email }})
+                </p>
+
+                <p class="card-text">
+                    <strong>Статус:</strong>
+                    {% include "applications/includes/application_status.html" %}
+                    {{ status_text }}
+                </p>
+
+                <p class="card-text">
+                    {% if result %}
+                        <strong>Результат:</strong> {{ result }}
+                    {% else %}
+                        Результат пока не зафиксирован.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <h1 class="text-danger">
+            Заявка не найдена
+        </h1>
+
+        <p>
+            Заявка с указанным идентификатором отсутствует.
+        </p>
+    {% endif %}
+
+    <a
+        href="{% url 'applications:list' %}"
+        class="btn btn-outline-secondary mt-3"
+    >
+        ← к списку заявок
+    </a>
+{% endblock %}
