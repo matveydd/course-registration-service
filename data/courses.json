@@ -1,0 +1,5 @@
+[
+  {"id": 1, "title": "Основы Python", "capacity": 2, "start_date": "2026-11-03"},
+  {"id": 2, "title": "Управление проектами", "capacity": 15, "start_date": "2026-11-17"},
+  {"id": 3, "title": "Информационная безопасность", "capacity": 1, "start_date": "2026-12-01"}
+]

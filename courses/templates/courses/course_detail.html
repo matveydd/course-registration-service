@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if course %}
+        {{ course.title }} – Регистрация на курсы
+    {% else %}
+        Курс не найден – Регистрация на курсы
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if course %}
+        <div class="card course-card">
+            <div class="card-body">
+                <h1 class="card-title">
+                    {{ course.title }}
+                </h1>
+
+                <p class="card-text">
+                    <strong>ID:</strong> {{ course.id }}
+                </p>
+
+                <p class="card-text">
+                    <strong>Вместимость:</strong>
+                    {{ course.capacity }} мест
+                </p>
+
+                <p class="card-text">
+                    <strong>Начало:</strong> {{ course.start_date }}
+                </p>
+
+                <p class="card-text">
+                    <strong>Свободно мест:</strong> {{ free }}
+                    {% if available %}
+                        <span class="badge bg-success">
+                            есть свободные места
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger">мест нет</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <h1 class="text-danger">
+            Курс не найден
+        </h1>
+
+        <p>
+            Курс с указанным идентификатором отсутствует.
+        </p>
+    {% endif %}
+
+    <a
+        href="{% url 'courses:list' %}"
+        class="btn btn-outline-secondary mt-3"
+    >
+        ← к списку курсов
+    </a>
+{% endblock %}

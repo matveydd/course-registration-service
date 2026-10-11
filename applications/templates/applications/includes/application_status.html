@@ -1,0 +1,17 @@
+{% if application.status == "approved" %}
+    <span class="badge bg-success application-status application-status-approved">
+        Одобрена
+    </span>
+{% elif application.status == "rejected" %}
+    <span class="badge bg-danger application-status application-status-rejected">
+        Отклонена
+    </span>
+{% elif application.status == "cancelled" %}
+    <span class="badge bg-secondary application-status application-status-cancelled">
+        Отменена
+    </span>
+{% else %}
+    <span class="badge bg-warning text-dark application-status application-status-pending">
+        На рассмотрении
+    </span>
+{% endif %}

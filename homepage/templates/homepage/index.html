@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Главная – Регистрация на курсы
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-4">Регистрация на курсы</h1>
+
+    <p class="lead">
+        Сервис регистрации сотрудников на внутренние курсы компании.
+    </p>
+    <p>
+        Сотрудники подают заявки на курсы, заявки рассматриваются,
+        а по итогам обучения фиксируются результаты.
+    </p>
+    <p>Основные разделы:</p>
+    <a href="{% url 'courses:list' %}" class="btn btn-primary me-2">
+        Курсы
+    </a>
+    <a href="{% url 'applications:list' %}" class="btn btn-secondary">
+        Заявки
+    </a>
+{% endblock %}

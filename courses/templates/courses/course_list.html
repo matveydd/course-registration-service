@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Курсы – Регистрация на курсы
+{% endblock %}
+
+{% block content %}
+    <h1>Курсы</h1>
+
+    <p>
+        Всего курсов: {{ items|length }}
+    </p>
+
+    {% for item in items %}
+        {% include "courses/includes/course_card.html" with course=item.course free=item.free %}
+    {% empty %}
+        <p>Курсы не найдены.</p>
+    {% endfor %}
+{% endblock %}
