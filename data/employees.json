@@ -1,0 +1,5 @@
+[
+  {"id": 1, "full_name": "Иванов Иван", "email": "ivanov@example.com"},
+  {"id": 2, "full_name": "Петрова Анна", "email": "petrova@example.com"},
+  {"id": 3, "full_name": "Сидоров Пётр", "email": "sidorov@example.com"}
+]
